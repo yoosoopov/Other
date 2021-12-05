@@ -23,16 +23,6 @@ namespace MultiblockSHA256
             var result = cmd.Invoke(args);
 
             return result;
-
-
-            //var path = @"D:\backup\dummy.dat";
-
-            //using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))
-            //{
-            //    fs.SetLength(30 * 1024L * 1024L * 1024L);
-            //}
-
-            //return 0;
         }
 
         static int Main(string path, long blockSize)
