@@ -11,3 +11,10 @@ MultiblockSHA256 [options]
   -t, --enableTracing           Enable tracing. [default: False]
   
 ```
+
+
+
+### Possible issues
+
+1. Lock file on start from writes
+2. 
