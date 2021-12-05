@@ -13,20 +13,25 @@ namespace MultiblockSHA256
 {
     class Program
     {
+        private static bool isTracingEnabled = false;
+
         static int Main(params string[] args)
         {
             var cmd = new RootCommand("Calculate SHA256 multi block signature of file.") { TreatUnmatchedTokensAsErrors = true };
             cmd.AddOption(new Option(new[] { "--path", "-p" }, "The path to the file.", typeof(string)) { IsRequired = true });
             cmd.AddOption(new Option(new[] { "--blockSize", "-s" }, "The target size of blocks in bytes.", typeof(long), () => 1024L * 1024L * 1024L));
-            cmd.Handler = CommandHandler.Create<string, long>(Main);
+            cmd.AddOption(new Option(new[] { "--enableTracing", "-t" }, "Enable tracing.", typeof(bool), () => false));
+            cmd.Handler = CommandHandler.Create<string, long, bool>(Main);
 
             var result = cmd.Invoke(args);
 
             return result;
         }
 
-        static int Main(string path, long blockSize)
+        static int Main(string path, long blockSize, bool enableTracing)
         {
+            isTracingEnabled = enableTracing;
+
             var watch = Stopwatch.StartNew();
             var fileInfo = new FileInfo(path);
 
@@ -38,8 +43,8 @@ namespace MultiblockSHA256
 
             var fileLength = fileInfo.Length;
 
-            Console.WriteLine($"File length is ~ {(double)fileLength / 1024 / 1024:F1} MB");
-
+            Log($"File length is ~ {(double)fileLength / 1024 :F1} KB");
+            
             var fullBlocksCount = fileLength / blockSize;
             var finalBlockSize = fileLength % blockSize;
             var queue = new ConcurrentQueue<BlockInfo>();
@@ -58,8 +63,8 @@ namespace MultiblockSHA256
                 }
             }
 
-            Console.WriteLine($"Blocks found {allBlocks.Count}");
-
+            Log($"Found {allBlocks.Count} blocks.");
+            
             foreach (var item in allBlocks)
             {
                 queue.Enqueue(item);
@@ -96,9 +101,8 @@ namespace MultiblockSHA256
                 Console.WriteLine();
             }
 
-            Console.WriteLine();
-            Console.WriteLine(watch.ElapsedMilliseconds);
-
+            Log($"Completed in {watch.ElapsedMilliseconds} ms.");
+            
             return 0;
         }
 
@@ -152,8 +156,16 @@ namespace MultiblockSHA256
                         Array.Copy(sha.Hash, block.Sha256, sha.Hash.Length);
                     }
 
-                    Console.WriteLine($"Block #{block.Sequence} processed on thread {Thread.CurrentThread.Name}.");
+                    Log($"Block #{block.Sequence} processed on thread {Thread.CurrentThread.Name}.");
                 }
+            }
+        }
+
+        private static void Log(string value)
+        {
+            if (isTracingEnabled)
+            {
+                Console.WriteLine(value);
             }
         }
 
